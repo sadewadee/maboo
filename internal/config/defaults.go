@@ -11,12 +11,19 @@ func Default() *Config {
 			HTTP3:   false,
 		},
 		PHP: PHPConfig{
-			Binary: "php",
-			Worker: "",
+			Version: "auto",
+			Mode:    "worker",
+			Binary:  "php",
+			Worker:  "",
 			INI: map[string]string{
 				"memory_limit":       "256M",
 				"max_execution_time": "30",
 			},
+		},
+		App: AppConfig{
+			Root:  ".",
+			Entry: "auto",
+			Env:   make(map[string]string),
 		},
 		Pool: PoolConfig{
 			MinWorkers:      4,

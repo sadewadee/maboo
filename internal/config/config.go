@@ -13,6 +13,7 @@ type Config struct {
 	Server    ServerConfig    `yaml:"server"`
 	PHP       PHPConfig       `yaml:"php"`
 	Pool      PoolConfig      `yaml:"pool"`
+	App       AppConfig       `yaml:"app"`
 	WebSocket WebSocketConfig `yaml:"websocket"`
 	Static    StaticConfig    `yaml:"static"`
 	Logging   LogConfig       `yaml:"logging"`
@@ -34,9 +35,17 @@ type TLSConfig struct {
 }
 
 type PHPConfig struct {
-	Binary string            `yaml:"binary"`
-	Worker string            `yaml:"worker"`
-	INI    map[string]string `yaml:"ini"`
+	Version string            `yaml:"version"` // auto, 7.4, 8.0, 8.1, 8.2, 8.3, 8.4
+	Mode    string            `yaml:"mode"`    // worker, request
+	Binary  string            `yaml:"binary"`  // Optional: use system PHP instead of bundled
+	Worker  string            `yaml:"worker"`  // Legacy: path to worker script
+	INI     map[string]string `yaml:"ini"`
+}
+
+type AppConfig struct {
+	Root  string            `yaml:"root"`  // Document root
+	Entry string            `yaml:"entry"` // auto, or explicit path like "public/index.php"
+	Env   map[string]string `yaml:"env"`   // Environment variables
 }
 
 type PoolConfig struct {
@@ -141,9 +150,28 @@ func (c *Config) Validate() error {
 	if c.Pool.MaxJobs < 0 {
 		return fmt.Errorf("pool.max_jobs must be >= 0, got %d", c.Pool.MaxJobs)
 	}
-	if c.PHP.Worker == "" && len(c.Workers) == 0 {
-		return fmt.Errorf("php.worker or workers[] is required")
+
+	// Validate PHP mode
+	validModes := map[string]bool{"worker": true, "request": true}
+	if !validModes[c.PHP.Mode] {
+		return fmt.Errorf("php.mode must be 'worker' or 'request', got %q", c.PHP.Mode)
 	}
+
+	// Validate PHP version
+	validVersions := map[string]bool{
+		"auto": true, "7.4": true, "8.0": true,
+		"8.1": true, "8.2": true, "8.3": true, "8.4": true,
+	}
+	if !validVersions[c.PHP.Version] {
+		return fmt.Errorf("php.version must be auto or specific version (7.4-8.4), got %q", c.PHP.Version)
+	}
+
+	// Legacy: php.worker is optional for embedded PHP mode
+	// Only required for backward compatibility with external PHP worker mode
+	if c.PHP.Worker == "" && len(c.Workers) == 0 && c.PHP.Binary != "" {
+		return fmt.Errorf("php.worker or workers[] is required when using external PHP binary")
+	}
+
 	if c.Server.Address == "" {
 		return fmt.Errorf("server.address is required")
 	}

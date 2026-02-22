@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200">
+  <defs>
+    <linearGradient id="bannerBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1b4b"/>
+      <stop offset="100%" style="stop-color:#312e81"/>
+    </linearGradient>
+    <linearGradient id="ghostGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#a5b4fc"/>
+      <stop offset="100%" style="stop-color:#c4b5fd"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="200" fill="url(#bannerBg)" rx="16"/>
+
+  <!-- Decorative dots -->
+  <circle cx="700" cy="30" r="4" fill="#6366f1" opacity="0.5"/>
+  <circle cx="720" cy="50" r="3" fill="#8b5cf6" opacity="0.4"/>
+  <circle cx="680" cy="60" r="5" fill="#a5b4fc" opacity="0.3"/>
+  <circle cx="750" cy="40" r="3" fill="#c4b5fd" opacity="0.4"/>
+  <circle cx="100" cy="170" r="4" fill="#6366f1" opacity="0.4"/>
+  <circle cx="130" cy="155" r="3" fill="#8b5cf6" opacity="0.3"/>
+
+  <!-- Ghost mascot -->
+  <g transform="translate(60, 30)">
+    <path d="M50 10
+             C20 10 10 35 10 60
+             L10 120
+             L25 105
+             L40 120
+             L55 105
+             L70 120
+             L85 105
+             L90 120
+             L90 60
+             C90 35 80 10 50 10 Z"
+          fill="url(#ghostGrad)"
+          stroke="#4f46e5"
+          stroke-width="2"/>
+
+    <!-- Eyes -->
+    <ellipse cx="35" cy="50" rx="10" ry="12" fill="#1e1b4b"/>
+    <ellipse cx="65" cy="50" rx="10" ry="12" fill="#1e1b4b"/>
+
+    <!-- Eye highlights -->
+    <ellipse cx="38" cy="46" rx="3" ry="4" fill="white" opacity="0.8"/>
+    <ellipse cx="68" cy="46" rx="3" ry="4" fill="white" opacity="0.8"/>
+
+    <!-- Smile -->
+    <path d="M38 75 Q50 90 62 75"
+          fill="none"
+          stroke="#1e1b4b"
+          stroke-width="4"
+          stroke-linecap="round"/>
+  </g>
+
+  <!-- Text -->
+  <text x="200" y="95" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="bold" fill="url(#textGrad)">
+    Maboo
+  </text>
+
+  <!-- Tagline -->
+  <text x="200" y="140" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#a5b4fc" opacity="0.9">
+    High-Performance PHP Application Server
+  </text>
+
+  <!-- PHP badge -->
+  <g transform="translate(200, 155)">
+    <rect width="60" height="24" rx="4" fill="#4f46e5"/>
+    <text x="30" y="17" font-family="monospace" font-size="12" fill="white" text-anchor="middle">PHP 8.3</text>
+  </g>
+
+  <!-- Go badge -->
+  <g transform="translate(270, 155)">
+    <rect width="50" height="24" rx="4" fill="#06b6d4"/>
+    <text x="25" y="17" font-family="monospace" font-size="12" fill="white" text-anchor="middle">Go</text>
+  </g>
+</svg>

@@ -1,5 +1,22 @@
 # Maboo
 
+<p align="center">
+  <img src="assets/logo.svg" alt="Maboo Logo" width="180">
+</p>
+
+<p align="center">
+  <strong>High-Performance PHP Application Server</strong>
+</p>
+
+<p align="center">
+  <a href="#performance">Benchmarks</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#configuration">Configuration</a> •
+  <a href="#php-worker">PHP Worker</a>
+</p>
+
+---
+
 A high-performance PHP application server written in Go. Maboo keeps PHP workers alive as long-running processes and communicates via a custom binary protocol, eliminating per-request bootstrap overhead.
 
 ## Why Maboo?
@@ -25,6 +42,59 @@ Traditional PHP-FPM spawns a new PHP process for each request, loading the entir
 - **Static File Serving** — With configurable `Cache-Control`
 - **Health Checks** — `/health`, `/healthz`, `/ready`, `/readyz`
 - **Framework Bridges** — Laravel, Symfony, WordPress, PSR-7
+
+## Performance
+
+Benchmarks run on Apple M1 (arm64), Go 1.25, tested with `-race` detector.
+
+### HTTP Middleware
+
+| Benchmark | Throughput | Latency | Memory | Allocs |
+|-----------|------------|---------|--------|--------|
+| Small response (gzip) | 8.4M req/s | 447 ns | 1 KB | 10 |
+| Large response (gzip) | 243K req/s | 16.1 µs | 17.7 KB | 14 |
+| No compression | 3.3M req/s | 1.1 µs | 3 KB | 9 |
+| Full middleware stack | 403K req/s | 9.1 µs | 12.3 KB | 31 |
+| Health endpoint | 9.6M req/s | 374 ns | 976 B | 9 |
+
+### Gzip Compression
+
+| Benchmark | Throughput | Memory/op | Allocs/op |
+|-----------|------------|-----------|-----------|
+| **Pooled (BestSpeed)** | **1,064 MB/s** | 7 B | 0 |
+| No Pool (Default) | 237 MB/s | 813,857 B | 17 |
+| **Improvement** | **4.5x faster** | **99.999% less** | **-17 allocs** |
+
+### Wire Protocol
+
+| Benchmark | Throughput | Latency | Memory | Allocs |
+|-----------|------------|---------|--------|--------|
+| WriteFrame | 176M ops/s | 22 ns | 16 B | 1 |
+| ReadFrame | 6.9M ops/s | 538 ns | 4.3 KB | 5 |
+| Ping/Pong roundtrip | 43M ops/s | 85 ns | 104 B | 5 |
+| Write/Read roundtrip | 30M ops/s | 123 ns | 336 B | 5 |
+| msgpack decode | 26M ops/s | 139 ns | 144 B | 4 |
+
+### Optimizations Applied
+
+1. **sync.Pool for gzip.Writer** — Reuses writers, eliminates 813 KB/op allocation
+2. **Pooled response writers** — Single wrapper for all middleware layers
+3. **Stack-allocated slog attrs** — Fixed-size array instead of variadic spread
+4. **Pooled wire buffers** — Header + payload coalesced into single write
+5. **Lazy compression buffering** — Only allocate when compression threshold met
+6. **BestSpeed compression level** — 4.5x throughput with ~5% size trade-off
+
+### Stability
+
+All components tested with Go race detector:
+
+```bash
+go test -race -count=1 ./...
+# ok  github.com/sadewadee/maboo/internal/config
+# ok  github.com/sadewadee/maboo/internal/pool
+# ok  github.com/sadewadee/maboo/internal/protocol
+# ok  github.com/sadewadee/maboo/internal/server
+```
 
 ## Quick Start
 

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a5b4fc"/>
+      <stop offset="100%" style="stop-color:#c4b5fd"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ghost body -->
+  <path d="M128 32
+           C70 32 40 72 40 128
+           L40 200
+           L64 180
+           L88 200
+           L112 180
+           L136 200
+           L160 180
+           L184 200
+           L208 180
+           L216 200
+           L216 128
+           C216 72 186 32 128 32 Z"
+        fill="url(#bodyGrad)"
+        stroke="#4f46e5"
+        stroke-width="4"/>
+
+  <!-- Eyes -->
+  <ellipse cx="96" cy="110" rx="18" ry="22" fill="#1e1b4b"/>
+  <ellipse cx="160" cy="110" rx="18" ry="22" fill="#1e1b4b"/>
+
+  <!-- Eye highlights -->
+  <ellipse cx="102" cy="104" rx="6" ry="8" fill="white" opacity="0.8"/>
+  <ellipse cx="166" cy="104" rx="6" ry="8" fill="white" opacity="0.8"/>
+
+  <!-- Smile -->
+  <path d="M100 150 Q128 175 156 150"
+        fill="none"
+        stroke="#1e1b4b"
+        stroke-width="6"
+        stroke-linecap="round"/>
+
+  <!-- Glow effect -->
+  <path d="M128 32
+           C70 32 40 72 40 128
+           L40 200
+           L64 180
+           L88 200
+           L112 180
+           L136 200
+           L160 180
+           L184 200
+           L208 180
+           L216 200
+           L216 128
+           C216 72 186 32 128 32 Z"
+        fill="none"
+        stroke="url(#glowGrad)"
+        stroke-width="8"
+        opacity="0.3"/>
+</svg>

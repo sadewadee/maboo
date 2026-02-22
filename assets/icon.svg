@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ghost body simplified -->
+  <path d="M32 6
+           C14 6 8 20 8 32
+           L8 54
+           L14 48
+           L20 54
+           L26 48
+           L32 54
+           L38 48
+           L44 54
+           L50 48
+           L56 54
+           L56 32
+           C56 20 50 6 32 6 Z"
+        fill="url(#iconGrad)"/>
+
+  <!-- Eyes -->
+  <ellipse cx="24" cy="26" rx="5" ry="6" fill="#1e1b4b"/>
+  <ellipse cx="40" cy="26" rx="5" ry="6" fill="#1e1b4b"/>
+
+  <!-- Eye highlights -->
+  <ellipse cx="26" cy="24" rx="2" ry="2.5" fill="white" opacity="0.8"/>
+  <ellipse cx="42" cy="24" rx="2" ry="2.5" fill="white" opacity="0.8"/>
+
+  <!-- Smile -->
+  <path d="M24 38 Q32 46 40 38"
+        fill="none"
+        stroke="#1e1b4b"
+        stroke-width="2.5"
+        stroke-linecap="round"/>
+</svg>

@@ -9,13 +9,12 @@ import (
 	"time"
 
 	"github.com/sadewadee/maboo/internal/config"
-	"github.com/sadewadee/maboo/internal/pool"
 )
 
 // Server is the main maboo HTTP server.
 type Server struct {
 	cfg     *config.Config
-	pool    *pool.Pool
+	pool    Pool
 	logger  *slog.Logger
 	http    *http.Server
 	router  *Router
@@ -23,7 +22,7 @@ type Server struct {
 }
 
 // New creates a new maboo server.
-func New(cfg *config.Config, workerPool *pool.Pool, logger *slog.Logger) *Server {
+func New(cfg *config.Config, workerPool Pool, logger *slog.Logger) *Server {
 	s := &Server{
 		cfg:    cfg,
 		pool:   workerPool,

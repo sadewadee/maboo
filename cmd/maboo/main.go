@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/sadewadee/maboo/internal/config"
-	"github.com/sadewadee/maboo/internal/pool"
 	"github.com/sadewadee/maboo/internal/server"
+	"github.com/sadewadee/maboo/internal/worker"
 )
 
-var version = "0.1.0-dev"
+var version = "0.2.0-dev"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -53,23 +53,13 @@ func serve() {
 
 	logger = setupLogger(cfg.Logging.Level, cfg.Logging.Format)
 
-	// Create worker pool
-	workerPool := pool.New(cfg.Pool, cfg.PHP, logger)
+	// Create embedded worker pool
+	workerPool := worker.NewPool(cfg)
+	workerPool.SetLogger(logger)
+
 	if err := workerPool.Start(); err != nil {
 		logger.Error("failed to start worker pool", "error", err)
 		os.Exit(1)
-	}
-
-	// Set up file watcher for development
-	if cfg.Watch.Enabled && len(cfg.Watch.Dirs) > 0 {
-		watcher := pool.NewWatcher(
-			cfg.Watch.Dirs,
-			cfg.Watch.Interval.Duration(),
-			logger,
-			func() { workerPool.Reload() },
-		)
-		watcher.Start()
-		defer watcher.Stop()
 	}
 
 	// Create HTTP server
@@ -144,7 +134,7 @@ func setupLogger(level, format string) *slog.Logger {
 }
 
 func printUsage() {
-	fmt.Println(`maboo - PHP Application Server
+	fmt.Println(`maboo - Embedded PHP Application Server
 
 Usage:
   maboo <command> [options]
@@ -163,5 +153,7 @@ Examples:
   maboo serve
   maboo serve /etc/maboo/maboo.yaml
   maboo version
-  kill -USR1 $(pidof maboo)   # Reload workers`)
+  kill -USR1 $(pidof maboo)   # Reload workers
+
+Embedded PHP Version: 7.4, 8.0, 8.1, 8.2, 8.3, 8.4`)
 }

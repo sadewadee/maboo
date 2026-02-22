@@ -9,12 +9,7 @@
  * Usage: Referenced in maboo.yaml as the worker script.
  */
 
-require_once __DIR__ . '/../php-sdk/src/Protocol/Msgpack.php';
-require_once __DIR__ . '/../php-sdk/src/Protocol/Frame.php';
-require_once __DIR__ . '/../php-sdk/src/Protocol/Wire.php';
-require_once __DIR__ . '/../php-sdk/src/Request.php';
-require_once __DIR__ . '/../php-sdk/src/Response.php';
-require_once __DIR__ . '/../php-sdk/src/Worker.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use Maboo\Request;
 use Maboo\Response;

@@ -1,4 +1,4 @@
-# Maboo Configuration
+# Maboo - Embedded PHP Application Server Configuration
 # Copy this file to maboo.yaml and adjust as needed
 
 server:
@@ -10,8 +10,8 @@ server:
   http3: false         # Enable HTTP/3 (requires TLS)
 
 php:
-  binary: "php"                          # PHP CLI binary path
-  worker: "examples/worker.php"          # Worker script path
+  version: "auto"      # auto, 7.4, 8.0, 8.1, 8.2, 8.3, 8.4
+  mode: "worker"       # worker (fast, persistent) or request (compatible, fresh)
   ini:
     memory_limit: "256M"
     max_execution_time: "30"
@@ -22,20 +22,18 @@ pool:
   max_jobs: 10000        # Max requests per worker before restart
   max_memory: "128M"     # Max memory per worker before restart
   idle_timeout: "60s"    # Kill idle workers after this duration
-  allocate_timeout: "30s" # Timeout when creating new worker
+  allocate_timeout: "30s" # Timeout when allocating a worker
   request_timeout: "30s"  # Max time to handle single request
 
-# WebSocket support (optional)
-websocket:
-  enabled: false
-  path: "/ws"
-  worker: "examples/ws-worker.php"
-  max_connections: 10000
-  ping_interval: "30s"
+app:
+  root: "."             # Document root
+  entry: "auto"         # auto-detect, or explicit like "public/index.php"
+  env:
+    APP_ENV: "production"
 
 # Static file serving
 static:
-  root: "public"                       # Document root for static files
+  root: "public"        # Document root for static files
   cache_control: "public, max-age=3600"
 
 logging:
@@ -52,7 +50,5 @@ metrics:
 watch:
   enabled: false
   dirs:
-    - "./src"
-    - "./app"
-    - "./examples"
+    - "."
   interval: "2s"

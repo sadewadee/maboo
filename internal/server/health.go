@@ -5,19 +5,17 @@ import (
 	"net/http"
 	"runtime"
 	"time"
-
-	"github.com/sadewadee/maboo/internal/pool"
 )
 
 var startTime = time.Now()
 
 // HealthHandler serves health check and readiness endpoints.
 type HealthHandler struct {
-	pool *pool.Pool
+	pool Pool
 }
 
 // NewHealthHandler creates a new health check handler.
-func NewHealthHandler(p *pool.Pool) *HealthHandler {
+func NewHealthHandler(p Pool) *HealthHandler {
 	return &HealthHandler{pool: p}
 }
 
@@ -42,7 +40,7 @@ func (h *HealthHandler) liveness(w http.ResponseWriter) {
 func (h *HealthHandler) readiness(w http.ResponseWriter) {
 	stats := h.pool.Stats()
 
-	ready := stats.IdleWorkers > 0
+	ready := stats.TotalWorkers() > 0
 	status := http.StatusOK
 	statusStr := "ready"
 	if !ready {
@@ -60,11 +58,11 @@ func (h *HealthHandler) readiness(w http.ResponseWriter) {
 		"uptime":         time.Since(startTime).String(),
 		"uptime_seconds": time.Since(startTime).Seconds(),
 		"workers": map[string]interface{}{
-			"total": stats.TotalWorkers,
-			"busy":  stats.BusyWorkers,
-			"idle":  stats.IdleWorkers,
+			"total":      stats.TotalWorkers(),
+			"busy":       stats.BusyWorkers(),
+			"idle":       stats.IdleWorkers(),
+			"requests":   stats.TotalRequests(),
 		},
-		"requests_total": stats.TotalRequests,
 		"memory": map[string]interface{}{
 			"alloc_mb":  mem.Alloc / 1024 / 1024,
 			"sys_mb":    mem.Sys / 1024 / 1024,

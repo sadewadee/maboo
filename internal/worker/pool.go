@@ -12,6 +12,14 @@ import (
 	"github.com/sadewadee/maboo/internal/phpengine"
 )
 
+// StatsGetter is the interface for pool statistics.
+type StatsGetter interface {
+	TotalWorkers() int
+	BusyWorkers() int
+	IdleWorkers() int
+	TotalRequests() int64
+}
+
 // Pool manages embedded PHP workers.
 type Pool struct {
 	cfg    *config.Config
@@ -129,27 +137,47 @@ func (p *Pool) Stop() error {
 }
 
 // Stats returns pool statistics.
-func (p *Pool) Stats() PoolStats {
+func (p *Pool) Stats() StatsGetter {
 	p.mu.RLock()
 	total := len(p.workers)
 	p.mu.RUnlock()
 
 	return PoolStats{
-		TotalWorkers:  total,
-		ActiveWorkers: int(p.activeWorkers.Load()),
-		BusyWorkers:   int(p.busyWorkers.Load()),
-		IdleWorkers:   total - int(p.busyWorkers.Load()),
-		TotalRequests: p.totalRequests.Load(),
+		totalWorkers:  total,
+		activeWorkers: int(p.activeWorkers.Load()),
+		busyWorkers:   int(p.busyWorkers.Load()),
+		idleWorkers:   total - int(p.busyWorkers.Load()),
+		totalRequests: p.totalRequests.Load(),
 	}
 }
 
 // PoolStats holds pool metrics.
 type PoolStats struct {
-	TotalWorkers  int   `json:"total_workers"`
-	ActiveWorkers int   `json:"active_workers"`
-	BusyWorkers   int   `json:"busy_workers"`
-	IdleWorkers   int   `json:"idle_workers"`
-	TotalRequests int64 `json:"total_requests"`
+	totalWorkers  int   `json:"total_workers"`
+	activeWorkers int   `json:"active_workers"`
+	busyWorkers   int   `json:"busy_workers"`
+	idleWorkers   int   `json:"idle_workers"`
+	totalRequests int64 `json:"total_requests"`
+}
+
+// TotalWorkers returns the total number of workers.
+func (s PoolStats) TotalWorkers() int {
+	return s.totalWorkers
+}
+
+// BusyWorkers returns the number of busy workers.
+func (s PoolStats) BusyWorkers() int {
+	return s.busyWorkers
+}
+
+// IdleWorkers returns the number of idle workers.
+func (s PoolStats) IdleWorkers() int {
+	return s.idleWorkers
+}
+
+// TotalRequests returns the total number of requests.
+func (s PoolStats) TotalRequests() int64 {
+	return s.totalRequests
 }
 
 func (p *Pool) spawnWorker() (*Worker, error) {
@@ -223,16 +251,16 @@ func (p *Pool) watchdog() {
 func (p *Pool) autoScale() {
 	stats := p.Stats()
 
-	if stats.TotalWorkers > 0 {
-		busyPct := float64(stats.BusyWorkers) / float64(stats.TotalWorkers) * 100
-		if busyPct >= 80 && stats.TotalWorkers < p.cfg.Pool.MaxWorkers {
+	if stats.TotalWorkers() > 0 {
+		busyPct := float64(stats.BusyWorkers()) / float64(stats.TotalWorkers()) * 100
+		if busyPct >= 80 && stats.TotalWorkers() < p.cfg.Pool.MaxWorkers {
 			w, err := p.spawnWorker()
 			if err == nil {
 				p.available <- w
 			}
 		}
 
-		if busyPct <= 20 && stats.TotalWorkers > p.cfg.Pool.MinWorkers {
+		if busyPct <= 20 && stats.TotalWorkers() > p.cfg.Pool.MinWorkers {
 			select {
 			case w := <-p.available:
 				go func() {

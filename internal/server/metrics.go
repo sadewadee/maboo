@@ -8,8 +8,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/sadewadee/maboo/internal/pool"
 )
 
 // Metrics collects Prometheus-compatible metrics.
@@ -23,11 +21,11 @@ type Metrics struct {
 	durationSum     atomic.Int64
 	durationCount   atomic.Int64
 
-	pool *pool.Pool
+	pool Pool
 }
 
 // NewMetrics creates a new metrics collector.
-func NewMetrics(p *pool.Pool) *Metrics {
+func NewMetrics(p Pool) *Metrics {
 	return &Metrics{
 		pool:            p,
 		durationBuckets: []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0},
@@ -114,19 +112,19 @@ func (m *Metrics) serveMetrics(w http.ResponseWriter) {
 		stats := m.pool.Stats()
 		b.WriteString("# HELP maboo_workers_total Total number of PHP workers.\n")
 		b.WriteString("# TYPE maboo_workers_total gauge\n")
-		fmt.Fprintf(&b, "maboo_workers_total %d\n", stats.TotalWorkers)
+		fmt.Fprintf(&b, "maboo_workers_total %d\n", stats.TotalWorkers())
 
 		b.WriteString("# HELP maboo_workers_busy Number of busy PHP workers.\n")
 		b.WriteString("# TYPE maboo_workers_busy gauge\n")
-		fmt.Fprintf(&b, "maboo_workers_busy %d\n", stats.BusyWorkers)
+		fmt.Fprintf(&b, "maboo_workers_busy %d\n", stats.BusyWorkers())
 
 		b.WriteString("# HELP maboo_workers_idle Number of idle PHP workers.\n")
 		b.WriteString("# TYPE maboo_workers_idle gauge\n")
-		fmt.Fprintf(&b, "maboo_workers_idle %d\n", stats.IdleWorkers)
+		fmt.Fprintf(&b, "maboo_workers_idle %d\n", stats.IdleWorkers())
 
 		b.WriteString("# HELP maboo_pool_requests_total Total requests processed by worker pool.\n")
 		b.WriteString("# TYPE maboo_pool_requests_total counter\n")
-		fmt.Fprintf(&b, "maboo_pool_requests_total %d\n", stats.TotalRequests)
+		fmt.Fprintf(&b, "maboo_pool_requests_total %d\n", stats.TotalRequests())
 	}
 
 	b.WriteString("# HELP maboo_go_goroutines Number of goroutines.\n")

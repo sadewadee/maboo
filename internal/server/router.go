@@ -1,21 +1,19 @@
 package server
 
 import (
-	"io"
 	"log/slog"
 	"net/http"
 	"path/filepath"
 	"strings"
 
 	"github.com/sadewadee/maboo/internal/config"
-	"github.com/sadewadee/maboo/internal/pool"
-	"github.com/sadewadee/maboo/internal/protocol"
+	"github.com/sadewadee/maboo/internal/phpengine"
 )
 
 // Router dispatches incoming HTTP requests to the appropriate handler.
 type Router struct {
 	cfg           *config.Config
-	pool          *pool.Pool
+	pool          Pool
 	logger        *slog.Logger
 	static        http.Handler
 	phpHandler    http.Handler
@@ -23,7 +21,7 @@ type Router struct {
 }
 
 // NewRouter creates a new request router.
-func NewRouter(cfg *config.Config, workerPool *pool.Pool, logger *slog.Logger) *Router {
+func NewRouter(cfg *config.Config, workerPool Pool, logger *slog.Logger) *Router {
 	r := &Router{
 		cfg:    cfg,
 		pool:   workerPool,
@@ -78,57 +76,23 @@ func (r *Router) isStaticFile(path string) bool {
 
 func (r *Router) newPHPHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		// Read request body
-		var body []byte
-		if req.Body != nil {
-			var err error
-			body, err = io.ReadAll(req.Body)
-			if err != nil {
-				r.logger.Error("reading request body", "error", err)
-				http.Error(w, "Failed to read request body", http.StatusBadRequest)
-				return
-			}
-			defer req.Body.Close()
+		// Determine document root and entry point
+		docRoot := r.cfg.App.Root
+		if docRoot == "" {
+			docRoot = "."
 		}
 
-		// Build protocol headers
-		headers := make(map[string]string)
-		for k, v := range req.Header {
-			headers[k] = strings.Join(v, ", ")
-		}
+		entryPoint := phpengine.DetectEntryPoint(docRoot, r.cfg.App.Entry)
+		script := filepath.Join(docRoot, entryPoint)
 
-		reqHeader := &protocol.RequestHeader{
-			Method:      req.Method,
-			URI:         req.URL.Path,
-			QueryString: req.URL.RawQuery,
-			Headers:     headers,
-			RemoteAddr:  req.RemoteAddr,
-			ServerName:  req.Host,
-			ServerPort:  r.extractPort(req),
-			Protocol:    req.Proto,
-		}
-
-		// Encode request as protocol frame
-		frame, err := protocol.EncodeRequest(reqHeader, body)
-		if err != nil {
-			r.logger.Error("encoding request", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+		// Create PHP context from HTTP request
+		ctx := phpengine.NewContext(req, docRoot, entryPoint)
 
 		// Dispatch to worker pool
-		respFrame, err := r.pool.Exec(frame)
+		resp, err := r.pool.Exec(ctx, script)
 		if err != nil {
 			r.logger.Error("worker exec", "error", err)
 			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusBadGateway)
-			return
-		}
-
-		// Decode response
-		resp, respBody, err := protocol.DecodeResponse(respFrame)
-		if err != nil {
-			r.logger.Error("decoding response", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
@@ -137,16 +101,6 @@ func (r *Router) newPHPHandler() http.Handler {
 			w.Header().Set(k, v)
 		}
 		w.WriteHeader(resp.Status)
-		w.Write(respBody)
+		w.Write(resp.Body)
 	})
-}
-
-func (r *Router) extractPort(req *http.Request) string {
-	if i := strings.LastIndex(req.Host, ":"); i != -1 {
-		return req.Host[i+1:]
-	}
-	if req.TLS != nil {
-		return "443"
-	}
-	return "80"
 }

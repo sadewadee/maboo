@@ -41,7 +41,7 @@ func TestPoolStats(t *testing.T) {
 	pool := worker.NewPool(cfg)
 
 	stats := pool.Stats()
-	if stats.TotalWorkers != 0 {
-		t.Errorf("expected 0 total workers before start, got %d", stats.TotalWorkers)
+	if stats.TotalWorkers() != 0 {
+		t.Errorf("expected 0 total workers before start, got %d", stats.TotalWorkers())
 	}
 }

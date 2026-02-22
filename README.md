@@ -29,11 +29,14 @@ Traditional PHP-FPM spawns a new PHP process for each request. Maboo embeds PHP 
 - **Request Mode** — Fresh context per request for compatibility
 - **Auto-Detect** — Automatically finds entry points and frameworks
 - **Graceful Operations** — Zero-downtime reload, graceful shutdown
+- **Modern Protocols** — HTTP/2, HTTP/3 (QUIC), ACME (Let's Encrypt)
 
 ## Features
 
 - **Embedded PHP Engine** — CGO bindings to libphp for direct execution
 - **Worker Pool Management** — Auto-scaling min/max workers, idle timeout
+- **HTTP/2 & HTTP/3** — Modern protocol support with h2c and QUIC
+- **ACME/Let's Encrypt** — Automatic HTTPS with free certificates
 - **Gzip Compression** — Pooled writers with lazy buffering (~1 GB/s throughput)
 - **Prometheus Metrics** — Request histograms, worker gauges, memory stats
 - **Auto-TLS** — Self-signed cert for development or bring your own
@@ -109,9 +112,10 @@ cp maboo.yaml.example maboo.yaml
 │  │ HTTP Server │  │ Middleware  │  │      Worker Pool            │ │
 │  │ (net/http)  │  │   Stack     │  │  ┌─────────┐ ┌─────────┐   │ │
 │  │             │  │             │  │  │Worker 1 │ │Worker 2 │   │ │
-│  │ - Routing   │  │ - Gzip      │  │  │ (PHP    │ │ (PHP    │   │ │
-│  │ - TLS       │  │ - Metrics   │  │  │ Context)│ │ Context)│   │ │
-│  │ - WebSocket │  │ - Health    │  │  └─────────┘ └─────────┘   │ │
+│  │ - HTTP/2    │  │ - Gzip      │  │  │ (PHP    │ │ (PHP    │   │ │
+│  │ - HTTP/3    │  │ - Metrics   │  │  │ Context)│ │ Context)│   │ │
+│  │ - TLS/ACME  │  │ - Health    │  │  └─────────┘ └─────────┘   │ │
+│  │ - WebSocket │  │ - Early Hints│ │                            │ │
 │  └──────┬──────┘  └──────┬──────┘  └─────────────┬───────────────┘ │
 │         │                │                     │                   │
 │         └────────────────┼─────────────────────┘                   │
@@ -132,9 +136,15 @@ cp maboo.yaml.example maboo.yaml
 | Section | Key | Default | Description |
 |---------|-----|---------|-------------|
 | `server.address` | `0.0.0.0:8080` | Listen address |
+| `server.http2` | `true` | Enable HTTP/2 support |
+| `server.http3` | `false` | Enable HTTP/3 (QUIC) |
+| `server.http_redirect` | `false` | HTTP to HTTPS redirect |
 | `server.tls.auto` | `false` | Auto-generate self-signed cert |
 | `server.tls.cert` | `""` | Path to TLS certificate |
 | `server.tls.key` | `""` | Path to TLS private key |
+| `server.tls.acme.email` | `""` | Let's Encrypt email |
+| `server.tls.acme.domains` | `[]` | Domains for certificate |
+| `server.tls.acme.staging` | `false` | Use Let's Encrypt staging |
 | `php.version` | `auto` | PHP version (auto, 7.4, 8.0, 8.1, 8.2, 8.3, 8.4) |
 | `php.mode` | `worker` | Execution mode (worker, request) |
 | `pool.min_workers` | `4` | Minimum workers |
@@ -148,6 +158,52 @@ cp maboo.yaml.example maboo.yaml
 | `logging.level` | `info` | Log level (debug/info/warn/error) |
 | `logging.format` | `json` | Log format (json/text) |
 | `metrics.enabled` | `true` | Enable Prometheus metrics |
+
+## HTTP/2 & HTTP/3
+
+Maboo supports modern HTTP protocols:
+
+### HTTP/2
+
+```yaml
+server:
+  http2: true
+```
+
+- Automatic for HTTPS connections
+- h2c (HTTP/2 cleartext) for HTTP
+
+### HTTP/3 (QUIC)
+
+```yaml
+server:
+  http3: true
+  tls:
+    cert: "/path/to/cert.pem"
+    key: "/path/to/key.pem"
+```
+
+- Uses QUIC protocol (UDP-based)
+- Alt-Svc header auto-advertised
+- Requires TLS
+
+## Automatic HTTPS (Let's Encrypt)
+
+```yaml
+server:
+  http_redirect: true
+  tls:
+    acme:
+      email: "admin@example.com"
+      domains:
+        - example.com
+        - www.example.com
+      staging: false  # Set true for testing
+```
+
+- Automatic certificate provisioning
+- Auto-renewal before expiry
+- HTTP-01 challenge support
 
 ## Execution Modes
 
@@ -222,11 +278,29 @@ Maboo will automatically use PHP 8.3 (latest compatible with ^8.1).
 
 | Path | Description |
 |------|-------------|
+| `/` | PHP application (placeholder until CGO) |
 | `/health` | Health check (always 200) |
 | `/healthz` | Liveness probe |
 | `/ready` | Readiness probe (checks worker pool) |
 | `/readyz` | Readiness probe |
 | `/metrics` | Prometheus metrics (if enabled) |
+
+## Metrics
+
+Maboo exposes Prometheus metrics at `/metrics`:
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `maboo_http_requests_total` | counter | Total HTTP requests |
+| `maboo_http_requests_active` | gauge | Active HTTP requests |
+| `maboo_http_response_bytes_total` | counter | Total bytes sent |
+| `maboo_http_request_duration_seconds` | histogram | Request duration |
+| `maboo_workers_total` | gauge | Total PHP workers |
+| `maboo_workers_busy` | gauge | Busy PHP workers |
+| `maboo_workers_idle` | gauge | Idle PHP workers |
+| `maboo_pool_requests_total` | counter | Pool requests processed |
+| `maboo_go_goroutines` | gauge | Number of goroutines |
+| `maboo_go_memstats_alloc_bytes` | gauge | Memory allocated |
 
 ## Development
 
@@ -253,6 +327,9 @@ make lint
 ## Dependencies
 
 - `gopkg.in/yaml.v3` — Config parsing
+- `github.com/quic-go/quic-go` — HTTP/3 support
+- `golang.org/x/net/http2` — HTTP/2 support
+- `golang.org/x/crypto/acme` — Let's Encrypt support
 
 ## License
 

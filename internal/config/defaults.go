@@ -13,7 +13,7 @@ func Default() *Config {
 		PHP: PHPConfig{
 			Version: "auto",
 			Mode:    "worker",
-			Binary:  "php",
+			Binary:  "",  // Empty = embedded PHP mode
 			Worker:  "",
 			INI: map[string]string{
 				"memory_limit":       "256M",

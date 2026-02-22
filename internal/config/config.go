@@ -166,9 +166,9 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("php.version must be auto or specific version (7.4-8.4), got %q", c.PHP.Version)
 	}
 
-	// Legacy: php.worker is optional for embedded PHP mode
-	// Only required for backward compatibility with external PHP worker mode
-	if c.PHP.Worker == "" && len(c.Workers) == 0 && c.PHP.Binary != "" {
+	// Legacy: php.worker is only required for external PHP worker mode
+	// Embedded PHP mode (default) doesn't need worker script
+	if c.PHP.Binary != "" && c.PHP.Worker == "" && len(c.Workers) == 0 {
 		return fmt.Errorf("php.worker or workers[] is required when using external PHP binary")
 	}
 

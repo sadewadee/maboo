@@ -74,12 +74,55 @@ func (e *Engine) Execute(ctx *Context, script string) (*Response, error) {
 	}
 
 	// TODO: Call CGO php_execute()
-	// For now, return placeholder
+	// For now, return placeholder response showing the request info
+	body := `<!DOCTYPE html>
+<html>
+<head>
+    <title>Maboo - PHP Placeholder</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        h1 { color: #6366f1; }
+        .info { background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        .warning { background: #fef3c7; padding: 10px; border-radius: 8px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>👻 Maboo - PHP Placeholder Response</h1>
+    <div class="warning">
+        <strong>Note:</strong> This is a placeholder response. Actual PHP execution requires CGO bindings to libphp.
+    </div>
+    <div class="info">
+        <h3>Request Info</h3>
+        <ul>
+            <li><strong>Script:</strong> ` + script + `</li>
+            <li><strong>PHP Version:</strong> ` + e.version + `</li>
+            <li><strong>Method:</strong> ` + ctx.Server["REQUEST_METHOD"] + `</li>
+            <li><strong>URI:</strong> ` + ctx.Server["REQUEST_URI"] + `</li>
+            <li><strong>Document Root:</strong> ` + ctx.DocumentRoot + `</li>
+        </ul>
+    </div>
+    <div class="info">
+        <h3>$_SERVER</h3>
+        <pre>` + formatMap(ctx.Server) + `</pre>
+    </div>
+</body>
+</html>`
+
 	return &Response{
-		Status:  200,
-		Headers: make(map[string]string),
-		Body:    []byte(""),
+		Status: 200,
+		Headers: map[string]string{
+			"Content-Type": "text/html; charset=utf-8",
+		},
+		Body: []byte(body),
 	}, nil
+}
+
+func formatMap(m map[string]string) string {
+	result := ""
+	for k, v := range m {
+		result += k + ": " + v + "\n"
+	}
+	return result
 }
 
 // Response represents the result of PHP execution.

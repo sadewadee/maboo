@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Maboo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 700px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 40px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 5rem;
+            margin-bottom: 10px;
+        }
+
+        .title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #a1a1aa;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .welcome {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .welcome h2 {
+            color: #1f2937;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .welcome p {
+            color: #6b7280;
+            line-height: 1.7;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .feature {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .feature h3 {
+            color: #374151;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .feature p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .status {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .status-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .status h3 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .status p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .info-box {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h4 {
+            color: #92400e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-box p {
+            color: #a16207;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .info-box a {
+            color: #92400e;
+            text-decoration: underline;
+        }
+
+        .links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .link.secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .link.secondary:hover {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .header {
+                padding: 30px 20px;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">👻</div>
+            <h1 class="title">Maboo</h1>
+            <p class="subtitle">Embedded PHP Application Server</p>
+        </div>
+
+        <div class="content">
+            <div class="welcome">
+                <h2>Welcome to Maboo!</h2>
+                <p>If you see this page, the Maboo web server is successfully installed and working. Further configuration is required.</p>
+            </div>
+
+            <div class="status">
+                <div class="status-icon">✅</div>
+                <h3>Server is Running</h3>
+                <p>PHP Version {{PHP_VERSION}} • Worker Mode • HTTP/2 Enabled</p>
+            </div>
+
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🚀</div>
+                    <h3>Blazing Fast</h3>
+                    <p>Built-in worker pool with persistent PHP processes</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📦</div>
+                    <h3>Single Binary</h3>
+                    <p>Embedded PHP engine, no external dependencies</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Modern Security</h3>
+                    <p>HTTP/2, HTTP/3, and automatic HTTPS support</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Zero Downtime</h3>
+                    <p>Graceful reload and hot code deployment</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4>📋 Online Documentation</h4>
+                <p>
+                    For online documentation and support please refer to
+                    <a href="https://github.com/sadewadee/maboo" target="_blank">github.com/sadewadee/maboo</a>.<br>
+                    Commercial support is available upon request.
+                </p>
+            </div>
+
+            <div class="links">
+                <a href="/health" class="link">
+                    <span>🏥</span> Health Check
+                </a>
+                <a href="/metrics" class="link">
+                    <span>📊</span> Metrics
+                </a>
+                <a href="https://github.com/sadewadee/maboo" class="link secondary" target="_blank">
+                    <span>📖</span> Documentation
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by <a href="https://github.com/sadewadee/maboo">Maboo</a> • PHP {{PHP_VERSION}}</p>
+            <p style="margin-top: 5px; opacity: 0.7;">Thank you for using Maboo!</p>
+        </div>
+    </div>
+</body>
+</html>

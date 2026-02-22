@@ -21,3 +21,6 @@ Thumbs.db
 # Config
 maboo.yaml
 !maboo.yaml.example
+
+# Worktrees
+.worktrees/

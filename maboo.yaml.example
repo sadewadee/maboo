@@ -1,60 +1,58 @@
+# Maboo Configuration
+# Copy this file to maboo.yaml and adjust as needed
+
 server:
   address: "0.0.0.0:8080"
   tls:
-    auto: false
-    cert: ""
-    key: ""
-  http3: false
+    auto: false        # Set true for auto self-signed cert (dev only)
+    cert: ""           # Path to TLS certificate file
+    key: ""            # Path to TLS private key file
+  http3: false         # Enable HTTP/3 (requires TLS)
 
 php:
-  binary: "php"
-  worker: "public/worker.php"
+  binary: "php"                          # PHP CLI binary path
+  worker: "examples/worker.php"          # Worker script path
   ini:
     memory_limit: "256M"
     max_execution_time: "30"
 
 pool:
-  min_workers: 4
-  max_workers: 32
-  max_jobs: 10000
-  max_memory: "128M"
-  idle_timeout: "60s"
-  allocate_timeout: "30s"
-  request_timeout: "30s"
+  min_workers: 4         # Minimum workers to keep alive
+  max_workers: 32        # Maximum workers (auto-scale)
+  max_jobs: 10000        # Max requests per worker before restart
+  max_memory: "128M"     # Max memory per worker before restart
+  idle_timeout: "60s"    # Kill idle workers after this duration
+  allocate_timeout: "30s" # Timeout when creating new worker
+  request_timeout: "30s"  # Max time to handle single request
 
-# Multiple worker scripts (alternative to php.worker)
-# workers:
-#   - script: "api-worker.php"
-#     pattern: "/api/*"
-#     count: 8
-#   - script: "web-worker.php"
-#     pattern: "/*"
-#     count: 4
-
+# WebSocket support (optional)
 websocket:
-  enabled: true
+  enabled: false
   path: "/ws"
-  worker: "ws-worker.php"
+  worker: "examples/ws-worker.php"
   max_connections: 10000
   ping_interval: "30s"
 
+# Static file serving
 static:
-  root: "public"
+  root: "public"                       # Document root for static files
   cache_control: "public, max-age=3600"
 
 logging:
-  level: "info"    # debug, info, warn, error
-  format: "json"   # json, text
-  output: "stdout"
+  level: "info"         # debug, info, warn, error
+  format: "json"        # json, text
+  output: "stdout"      # stdout, stderr, or file path
 
+# Prometheus metrics endpoint
 metrics:
   enabled: true
   path: "/metrics"
 
-# File watcher for development (auto-reload on PHP file changes)
+# File watcher for development (auto-reload workers on PHP changes)
 watch:
   enabled: false
   dirs:
     - "./src"
     - "./app"
+    - "./examples"
   interval: "2s"

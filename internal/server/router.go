@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/maboo-dev/maboo/internal/config"
-	"github.com/maboo-dev/maboo/internal/pool"
-	"github.com/maboo-dev/maboo/internal/protocol"
+	"github.com/sadewadee/maboo/internal/config"
+	"github.com/sadewadee/maboo/internal/pool"
+	"github.com/sadewadee/maboo/internal/protocol"
 )
 
 // Router dispatches incoming HTTP requests to the appropriate handler.

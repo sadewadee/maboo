@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"sync"
 )
 
 // Magic bytes identify maboo-wire protocol frames.
@@ -43,51 +44,83 @@ type Frame struct {
 	Payload  []byte // raw bytes
 }
 
+// writeBufPool pools scratch buffers for WriteFrame to avoid per-call allocation.
+// For small frames (ping/pong, worker signals) this eliminates the header escape.
+var writeBufPool = sync.Pool{
+	New: func() interface{} {
+		b := make([]byte, 0, 256) // enough for most control frames
+		return &b
+	},
+}
+
 // WriteFrame encodes and writes a frame to the given writer.
+// Coalesces header + headers + payload into a single Write call to reduce
+// syscalls and avoid per-call heap allocations for small frames.
 func WriteFrame(w io.Writer, f *Frame) error {
-	header := make([]byte, FrameHeaderSize)
-	header[0] = Magic[0]
-	header[1] = Magic[1]
-	header[2] = Version
-	header[3] = f.Type
-	header[4] = f.Flags
-	binary.BigEndian.PutUint16(header[5:7], f.StreamID)
+	totalSize := FrameHeaderSize + len(f.Headers) + len(f.Payload)
 
-	// Header size as 3 bytes (big-endian uint24)
+	// Get a pooled buffer, grow if needed
+	bp := writeBufPool.Get().(*[]byte)
+	buf := (*bp)[:0]
+	if cap(buf) < totalSize {
+		buf = make([]byte, 0, totalSize)
+	}
+	buf = buf[:FrameHeaderSize]
+
+	buf[0] = Magic[0]
+	buf[1] = Magic[1]
+	buf[2] = Version
+	buf[3] = f.Type
+	buf[4] = f.Flags
+	binary.BigEndian.PutUint16(buf[5:7], f.StreamID)
+
 	hdrSize := len(f.Headers)
-	header[7] = byte(hdrSize >> 16)
-	header[8] = byte(hdrSize >> 8)
-	header[9] = byte(hdrSize)
+	buf[7] = byte(hdrSize >> 16)
+	buf[8] = byte(hdrSize >> 8)
+	buf[9] = byte(hdrSize)
 
-	binary.BigEndian.PutUint32(header[10:14], uint32(len(f.Payload)))
+	binary.BigEndian.PutUint32(buf[10:14], uint32(len(f.Payload)))
 
-	if _, err := w.Write(header); err != nil {
-		return fmt.Errorf("writing frame header: %w", err)
-	}
-	if len(f.Headers) > 0 {
-		if _, err := w.Write(f.Headers); err != nil {
-			return fmt.Errorf("writing frame headers: %w", err)
-		}
-	}
-	if len(f.Payload) > 0 {
-		if _, err := w.Write(f.Payload); err != nil {
-			return fmt.Errorf("writing frame payload: %w", err)
-		}
+	buf = append(buf, f.Headers...)
+	buf = append(buf, f.Payload...)
+
+	_, err := w.Write(buf)
+
+	// Return buffer to pool
+	*bp = buf
+	writeBufPool.Put(bp)
+
+	if err != nil {
+		return fmt.Errorf("writing frame: %w", err)
 	}
 	return nil
 }
 
+// readHdrPool pools the 14-byte header buffer for ReadFrame.
+var readHdrPool = sync.Pool{
+	New: func() interface{} {
+		b := make([]byte, FrameHeaderSize)
+		return &b
+	},
+}
+
 // ReadFrame reads and decodes a frame from the given reader.
+// Uses pooled header buffer and coalesced data allocation.
 func ReadFrame(r io.Reader) (*Frame, error) {
-	header := make([]byte, FrameHeaderSize)
+	bp := readHdrPool.Get().(*[]byte)
+	header := *bp
+
 	if _, err := io.ReadFull(r, header); err != nil {
+		readHdrPool.Put(bp)
 		return nil, fmt.Errorf("reading frame header: %w", err)
 	}
 
 	if header[0] != Magic[0] || header[1] != Magic[1] {
+		readHdrPool.Put(bp)
 		return nil, fmt.Errorf("invalid magic bytes: 0x%02x%02x", header[0], header[1])
 	}
 	if header[2] != Version {
+		readHdrPool.Put(bp)
 		return nil, fmt.Errorf("unsupported protocol version: %d", header[2])
 	}
 
@@ -98,18 +131,22 @@ func ReadFrame(r io.Reader) (*Frame, error) {
 	}
 
 	hdrSize := int(header[7])<<16 | int(header[8])<<8 | int(header[9])
-	payloadSize := binary.BigEndian.Uint32(header[10:14])
+	payloadSize := int(binary.BigEndian.Uint32(header[10:14]))
 
-	if hdrSize > 0 {
-		f.Headers = make([]byte, hdrSize)
-		if _, err := io.ReadFull(r, f.Headers); err != nil {
-			return nil, fmt.Errorf("reading frame headers (%d bytes): %w", hdrSize, err)
+	readHdrPool.Put(bp)
+
+	// Single allocation for both headers + payload data
+	totalData := hdrSize + payloadSize
+	if totalData > 0 {
+		data := make([]byte, totalData)
+		if _, err := io.ReadFull(r, data); err != nil {
+			return nil, fmt.Errorf("reading frame data (%d bytes): %w", totalData, err)
 		}
-	}
-	if payloadSize > 0 {
-		f.Payload = make([]byte, payloadSize)
-		if _, err := io.ReadFull(r, f.Payload); err != nil {
-			return nil, fmt.Errorf("reading frame payload (%d bytes): %w", payloadSize, err)
+		if hdrSize > 0 {
+			f.Headers = data[:hdrSize]
+		}
+		if payloadSize > 0 {
+			f.Payload = data[hdrSize:]
 		}
 	}
 

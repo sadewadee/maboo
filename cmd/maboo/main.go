@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/maboo-dev/maboo/internal/config"
-	"github.com/maboo-dev/maboo/internal/pool"
-	"github.com/maboo-dev/maboo/internal/server"
+	"github.com/sadewadee/maboo/internal/config"
+	"github.com/sadewadee/maboo/internal/pool"
+	"github.com/sadewadee/maboo/internal/server"
 )
 
 var version = "0.1.0-dev"

@@ -1,4 +1,4 @@
-module github.com/maboo-dev/maboo
+module github.com/sadewadee/maboo
 
 go 1.25.1
 

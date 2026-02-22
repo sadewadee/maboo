@@ -8,8 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/maboo-dev/maboo/internal/config"
-	"github.com/maboo-dev/maboo/internal/protocol"
+	"github.com/sadewadee/maboo/internal/config"
+	"github.com/sadewadee/maboo/internal/protocol"
 )
 
 // Pool manages a pool of PHP worker processes.

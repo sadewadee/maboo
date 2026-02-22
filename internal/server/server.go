@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/maboo-dev/maboo/internal/config"
-	"github.com/maboo-dev/maboo/internal/pool"
+	"github.com/sadewadee/maboo/internal/config"
+	"github.com/sadewadee/maboo/internal/pool"
 )
 
 // Server is the main maboo HTTP server.
@@ -94,15 +94,15 @@ func (s *Server) startTLS() error {
 }
 
 func (s *Server) buildMiddleware(handler http.Handler) http.Handler {
-	handler = RecoveryMiddleware(s.logger)(handler)
-	handler = RequestIDMiddleware()(handler)
-	handler = EarlyHintsMiddleware()(handler)
-	handler = LoggingMiddleware(s.logger)(handler)
+	// CoreMiddleware collapses Recovery + RequestID + EarlyHints + Logging
+	// into a single handler with one pooled response writer and one context value.
+	handler = CoreMiddleware(s.logger)(handler)
 
 	if s.cfg.Metrics.Enabled {
 		handler = s.metrics.Middleware(s.cfg.Metrics.Path)(handler)
 	}
 
+	// Compression is outermost (wraps everything including metrics)
 	handler = CompressionMiddleware()(handler)
 
 	return handler

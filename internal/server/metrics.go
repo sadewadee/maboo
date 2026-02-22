@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/maboo-dev/maboo/internal/pool"
+	"github.com/sadewadee/maboo/internal/pool"
 )
 
 // Metrics collects Prometheus-compatible metrics.

@@ -22,5 +22,8 @@ Thumbs.db
 maboo.yaml
 !maboo.yaml.example
 
+# Docs (local only)
+docs/
+
 # Worktrees
 .worktrees/

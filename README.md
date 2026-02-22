@@ -1,0 +1,306 @@
+# Maboo
+
+A high-performance PHP application server written in Go. Maboo keeps PHP workers alive as long-running processes and communicates via a custom binary protocol, eliminating per-request bootstrap overhead.
+
+## Why Maboo?
+
+Traditional PHP-FPM spawns a new PHP process for each request, loading the entire framework on every request. Maboo solves this by:
+
+- **Persistent workers** — PHP workers boot once and handle thousands of requests
+- **Binary protocol** — Efficient msgpack-based communication between Go and PHP
+- **Low overhead** — Pooled resources, zero-allocation hot paths
+- **Graceful operations** — Zero-downtime reload, graceful shutdown
+
+## Features
+
+- **Worker Pool Management** — Auto-scaling min/max workers, idle timeout, memory limits
+- **Binary Wire Protocol** — msgpack-encoded headers, zero-copy payload transfer
+- **Gzip Compression** — Pooled writers with lazy buffering (~1 GB/s throughput)
+- **HTTP/103 Early Hints** — `rel=preload` / `rel=preconnect` support
+- **WebSocket** — Full duplex via dedicated PHP worker
+- **Prometheus Metrics** — Request histograms, worker gauges, memory stats
+- **Auto-TLS** — Self-signed cert for development or bring your own
+- **File Watcher** — Auto-reload workers on PHP changes (dev mode)
+- **Zero-downtime Reload** — `SIGUSR1` for graceful worker rotation
+- **Static File Serving** — With configurable `Cache-Control`
+- **Health Checks** — `/health`, `/healthz`, `/ready`, `/readyz`
+- **Framework Bridges** — Laravel, Symfony, WordPress, PSR-7
+
+## Quick Start
+
+### 1. Build
+
+```bash
+make build
+# or
+go build -o maboo ./cmd/maboo
+```
+
+### 2. Configure
+
+```bash
+cp maboo.yaml.example maboo.yaml
+```
+
+### 3. Run
+
+```bash
+./maboo serve
+```
+
+The server starts on `http://0.0.0.0:8080` by default.
+
+## Project Structure
+
+```
+maboo/
+├── cmd/maboo/              # CLI entry point
+├── internal/
+│   ├── config/             # YAML config loader
+│   ├── pool/               # Worker pool manager
+│   ├── protocol/           # Binary wire protocol
+│   ├── server/             # HTTP server, middleware, health, metrics
+│   └── websocket/          # WebSocket handler
+├── php-sdk/
+│   └── src/
+│       ├── Protocol/       # Frame, Wire, Msgpack
+│       ├── Bridge/         # Laravel, Symfony, WordPress, PSR-7
+│       ├── WebSocket/      # Connection handler
+│       ├── Worker.php      # Main worker loop
+│       ├── Request.php     # HTTP request object
+│       └── Response.php    # HTTP response builder
+├── examples/
+│   ├── worker.php          # Basic HTTP worker
+│   └── ws-worker.php       # WebSocket worker
+├── maboo.yaml.example      # Example configuration
+├── Dockerfile
+├── Makefile
+└── README.md
+```
+
+## Configuration
+
+| Section | Key | Default | Description |
+|---------|-----|---------|-------------|
+| `server.address` | `0.0.0.0:8080` | Listen address |
+| `server.tls.auto` | `false` | Auto-generate self-signed cert |
+| `server.tls.cert` | `""` | Path to TLS certificate |
+| `server.tls.key` | `""` | Path to TLS private key |
+| `php.binary` | `php` | PHP CLI binary path |
+| `php.worker` | `examples/worker.php` | Worker script path |
+| `pool.min_workers` | `4` | Minimum workers |
+| `pool.max_workers` | `32` | Maximum workers |
+| `pool.max_jobs` | `10000` | Requests per worker before restart |
+| `pool.max_memory` | `128M` | Memory limit per worker |
+| `pool.idle_timeout` | `60s` | Kill idle workers after |
+| `pool.request_timeout` | `30s` | Max request handling time |
+| `websocket.enabled` | `false` | Enable WebSocket |
+| `static.root` | `public` | Static files directory |
+| `logging.level` | `info` | Log level (debug/info/warn/error) |
+| `logging.format` | `json` | Log format (json/text) |
+| `metrics.enabled` | `true` | Enable Prometheus metrics |
+| `watch.enabled` | `false` | Enable file watcher |
+
+## PHP Worker
+
+### Basic Example
+
+```php
+<?php
+
+require_once __DIR__ . '/../php-sdk/src/Worker.php';
+require_once __DIR__ . '/../php-sdk/src/Request.php';
+require_once __DIR__ . '/../php-sdk/src/Response.php';
+
+use Maboo\Worker;
+use Maboo\Request;
+use Maboo\Response;
+
+$worker = new Worker();
+
+$worker->onRequest(function (Request $request, Response $response) {
+    match ($request->uri) {
+        '/' => $response->html('<h1>Hello from Maboo!</h1>'),
+
+        '/api/info' => $response->json([
+            'php_version' => PHP_VERSION,
+            'pid' => getmypid(),
+            'memory' => memory_get_usage(true),
+        ]),
+
+        '/api/echo' => $response->json([
+            'method' => $request->method,
+            'uri' => $request->uri,
+            'query' => $request->query(),
+            'headers' => $request->headers,
+            'body' => $request->body,
+        ]),
+
+        default => $response->status(404)->json(['error' => 'Not Found']),
+    };
+});
+
+$worker->run();
+```
+
+### Request Object
+
+```php
+$request->method;      // HTTP method (GET, POST, etc.)
+$request->uri;         // Request URI path
+$request->query();     // Query parameters as array
+$request->headers;     // Request headers
+$request->body;        // Raw request body
+$request->remote_addr; // Client IP address
+```
+
+### Response Object
+
+```php
+$response->status(200);                    // Set status code
+$response->header('X-Custom', 'value');    // Set header
+$response->html('<h1>Hello</h1>');         // HTML response
+$response->json(['key' => 'value']);       // JSON response
+$response->redirect('/new-path');          // Redirect
+```
+
+## Framework Bridges
+
+### Laravel
+
+```php
+<?php
+
+require_once __DIR__ . '/../php-sdk/src/Bridge/Laravel.php';
+require_once __DIR__ . '/../php-sdk/src/Worker.php';
+
+use Maboo\Bridge\Laravel;
+use Maboo\Worker;
+
+$worker = new Worker();
+$bridge = new Laravel(__DIR__ . '/../');
+
+$worker->onRequest(function ($request, $response) use ($bridge) {
+    $bridge->handle($request, $response);
+});
+
+$worker->run();
+```
+
+### Symfony
+
+```php
+<?php
+
+require_once __DIR__ . '/../php-sdk/src/Bridge/Symfony.php';
+require_once __DIR__ . '/../php-sdk/src/Worker.php';
+
+use Maboo\Bridge\Symfony;
+use Maboo\Worker;
+
+$worker = new Worker();
+$bridge = new Symfony(__DIR__ . '/../');
+
+$worker->onRequest(function ($request, $response) use ($bridge) {
+    $bridge->handle($request, $response);
+});
+
+$worker->run();
+```
+
+### WordPress
+
+```php
+<?php
+
+require_once __DIR__ . '/../php-sdk/src/Bridge/WordPress.php';
+require_once __DIR__ . '/../php-sdk/src/Worker.php';
+
+use Maboo\Bridge\WordPress;
+use Maboo\Worker;
+
+$worker = new Worker();
+$bridge = new WordPress(__DIR__ . '/../');
+
+$worker->onRequest(function ($request, $response) use ($bridge) {
+    $bridge->handle($request, $response);
+});
+
+$worker->run();
+```
+
+## Wire Protocol
+
+Maboo uses a custom binary protocol for Go ↔ PHP communication:
+
+```
+┌───────────────────────────────────────────────────────────────┐
+│ Magic (2B) │ Version (1B) │ Type (1B) │ Flags (1B) │ StreamID (2B) │
+├───────────────────────────────────────────────────────────────┤
+│ HeaderLen (3B) │ PayloadLen (4B) │ Headers (msgpack) │ Payload │
+└───────────────────────────────────────────────────────────────┘
+```
+
+- **14-byte fixed header** — Minimal overhead per frame
+- **msgpack headers** — ~40% smaller than JSON
+- **Frame types**: Request, Response, StreamData, StreamClose, WorkerReady, WorkerStop, Ping, Error
+
+## Signals
+
+| Signal | Action |
+|--------|--------|
+| `SIGINT` | Graceful shutdown |
+| `SIGTERM` | Graceful shutdown |
+| `SIGUSR1` | Zero-downtime worker reload |
+
+## Endpoints
+
+| Path | Description |
+|------|-------------|
+| `/health` | Health check (always 200) |
+| `/healthz` | Liveness probe |
+| `/ready` | Readiness probe (checks worker pool) |
+| `/readyz` | Readiness probe |
+| `/metrics` | Prometheus metrics (if enabled) |
+
+## Docker
+
+```bash
+# Build
+docker build -t maboo .
+
+# Run
+docker run -p 8080:8080 -v $(pwd):/app maboo serve
+
+# With custom config
+docker run -p 8080:8080 -v $(pwd):/app maboo serve maboo.yaml
+```
+
+## Development
+
+```bash
+# Build
+make build
+
+# Build with version
+VERSION=1.0.0 make build
+
+# Build optimized
+go build -trimpath -ldflags "-s -w" -o maboo ./cmd/maboo
+
+# Format
+make fmt
+
+# Lint
+make lint
+```
+
+## Dependencies
+
+- `gorilla/websocket` — WebSocket protocol
+- `vmihailenco/msgpack` — Binary serialization
+- `gopkg.in/yaml.v3` — Config parsing
+
+## License
+
+MIT

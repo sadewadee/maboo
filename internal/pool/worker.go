@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/maboo-dev/maboo/internal/protocol"
+	"github.com/sadewadee/maboo/internal/protocol"
 )
 
 // WorkerState represents the current state of a worker.

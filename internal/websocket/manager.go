@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/maboo-dev/maboo/internal/protocol"
+	"github.com/sadewadee/maboo/internal/protocol"
 )
 
 // Client represents a single WebSocket connection.

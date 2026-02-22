@@ -6,9 +6,12 @@ import "time"
 func Default() *Config {
 	return &Config{
 		Server: ServerConfig{
-			Address: "0.0.0.0:8080",
-			TLS:     TLSConfig{Auto: false},
-			HTTP3:   false,
+			Address:      "0.0.0.0:8080",
+			Mode:         ModeNative,
+			HTTP2:        true,
+			HTTP3:        false,
+			TLS:          TLSConfig{Auto: false},
+			HTTPRedirect: false,
 		},
 		PHP: PHPConfig{
 			Version: "auto",

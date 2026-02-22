@@ -224,14 +224,3 @@ func LoggingMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 		})
 	}
 }
-
-func EarlyHintsMiddleware() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			rw := rwPool.Get().(*mabooResponseWriter)
-			rw.reset(w)
-			next.ServeHTTP(rw, r)
-			rwPool.Put(rw)
-		})
-	}
-}

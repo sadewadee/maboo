@@ -22,16 +22,35 @@ type Config struct {
 	Workers   []WorkerConfig  `yaml:"workers"`
 }
 
+// ServerMode defines the server operation mode
+type ServerMode string
+
+const (
+	ModeNative ServerMode = "native"
+	ModeCaddy  ServerMode = "caddy"
+)
+
 type ServerConfig struct {
-	Address string    `yaml:"address"`
-	TLS     TLSConfig `yaml:"tls"`
-	HTTP3   bool      `yaml:"http3"`
+	Address      string      `yaml:"address"`
+	Mode         ServerMode  `yaml:"mode"`
+	HTTP2        bool        `yaml:"http2"`
+	HTTP3        bool        `yaml:"http3"`
+	TLS          TLSConfig   `yaml:"tls"`
+	HTTPRedirect bool        `yaml:"http_redirect"`
 }
 
 type TLSConfig struct {
-	Auto bool   `yaml:"auto"`
-	Cert string `yaml:"cert"`
-	Key  string `yaml:"key"`
+	Auto  bool       `yaml:"auto"`
+	Cert  string     `yaml:"cert"`
+	Key   string     `yaml:"key"`
+	ACME  ACMEConfig `yaml:"acme"`
+}
+
+type ACMEConfig struct {
+	Email    string   `yaml:"email"`
+	Domains  []string `yaml:"domains"`
+	CacheDir string   `yaml:"cache_dir"`
+	Staging  bool     `yaml:"staging"`
 }
 
 type PHPConfig struct {

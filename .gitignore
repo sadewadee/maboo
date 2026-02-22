@@ -1,0 +1,23 @@
+# Go
+/maboo
+*.exe
+vendor/
+*.test
+*.out
+
+# PHP
+/php-sdk/vendor/
+/php-sdk/composer.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Config
+maboo.yaml
+!maboo.yaml.example

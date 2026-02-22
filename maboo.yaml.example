@@ -1,0 +1,60 @@
+server:
+  address: "0.0.0.0:8080"
+  tls:
+    auto: false
+    cert: ""
+    key: ""
+  http3: false
+
+php:
+  binary: "php"
+  worker: "public/worker.php"
+  ini:
+    memory_limit: "256M"
+    max_execution_time: "30"
+
+pool:
+  min_workers: 4
+  max_workers: 32
+  max_jobs: 10000
+  max_memory: "128M"
+  idle_timeout: "60s"
+  allocate_timeout: "30s"
+  request_timeout: "30s"
+
+# Multiple worker scripts (alternative to php.worker)
+# workers:
+#   - script: "api-worker.php"
+#     pattern: "/api/*"
+#     count: 8
+#   - script: "web-worker.php"
+#     pattern: "/*"
+#     count: 4
+
+websocket:
+  enabled: true
+  path: "/ws"
+  worker: "ws-worker.php"
+  max_connections: 10000
+  ping_interval: "30s"
+
+static:
+  root: "public"
+  cache_control: "public, max-age=3600"
+
+logging:
+  level: "info"    # debug, info, warn, error
+  format: "json"   # json, text
+  output: "stdout"
+
+metrics:
+  enabled: true
+  path: "/metrics"
+
+# File watcher for development (auto-reload on PHP file changes)
+watch:
+  enabled: false
+  dirs:
+    - "./src"
+    - "./app"
+  interval: "2s"

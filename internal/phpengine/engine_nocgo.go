@@ -1,8 +1,11 @@
+//go:build !php_embed
+
 package phpengine
 
 import (
 	_ "embed"
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -12,9 +15,11 @@ var placeholderHTML string
 
 // Engine represents an embedded PHP interpreter instance.
 type Engine struct {
-	version string
-	mu      sync.RWMutex
-	started bool
+	version   string
+	mu        sync.RWMutex
+	started   bool
+	threadID  int32
+	extensions *ExtensionManager
 }
 
 // NewEngine creates a new embedded PHP engine for the specified version.
@@ -30,14 +35,20 @@ func NewEngine(version string) (*Engine, error) {
 	}
 
 	return &Engine{
-		version: version,
-		started: false,
+		version:  version,
+		started:  false,
+		threadID: getThreadID(),
 	}, nil
 }
 
 // Version returns the PHP version this engine uses.
 func (e *Engine) Version() string {
 	return e.version
+}
+
+// SetExtensions sets the extension manager for this engine
+func (e *Engine) SetExtensions(em *ExtensionManager) {
+	e.extensions = em
 }
 
 // Startup initializes the PHP interpreter.
@@ -50,7 +61,7 @@ func (e *Engine) Startup() error {
 		return nil
 	}
 
-	// TODO: Call CGO php_startup()
+	// Placeholder - actual PHP startup requires libphp
 	e.started = true
 	return nil
 }
@@ -64,7 +75,6 @@ func (e *Engine) Shutdown() error {
 		return nil
 	}
 
-	// TODO: Call CGO php_shutdown()
 	e.started = false
 	return nil
 }
@@ -78,8 +88,7 @@ func (e *Engine) Execute(ctx *Context, script string) (*Response, error) {
 		return nil, fmt.Errorf("engine not started")
 	}
 
-	// TODO: Call CGO php_execute()
-	// For now, return placeholder response
+	// Placeholder response - actual execution requires libphp
 	body := strings.ReplaceAll(placeholderHTML, "{{PHP_VERSION}}", e.version)
 
 	return &Response{
@@ -89,6 +98,13 @@ func (e *Engine) Execute(ctx *Context, script string) (*Response, error) {
 		},
 		Body: []byte(body),
 	}, nil
+}
+
+// MemoryStats returns current memory usage
+func (e *Engine) MemoryStats() (alloc, total uint64) {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	return m.Alloc, m.Sys
 }
 
 // Response represents the result of PHP execution.

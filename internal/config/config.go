@@ -54,11 +54,18 @@ type ACMEConfig struct {
 }
 
 type PHPConfig struct {
-	Version string            `yaml:"version"` // auto, 7.4, 8.0, 8.1, 8.2, 8.3, 8.4
-	Mode    string            `yaml:"mode"`    // worker, request
-	Binary  string            `yaml:"binary"`  // Optional: use system PHP instead of bundled
-	Worker  string            `yaml:"worker"`  // Legacy: path to worker script
-	INI     map[string]string `yaml:"ini"`
+	Version    string            `yaml:"version"`    // auto, 7.4, 8.0, 8.1, 8.2, 8.3, 8.4
+	Mode       string            `yaml:"mode"`       // worker, request
+	Binary     string            `yaml:"binary"`     // Optional: use system PHP instead of bundled
+	Worker     string            `yaml:"worker"`     // Legacy: path to worker script
+	INI        map[string]string `yaml:"ini"`        // PHP ini settings
+	Extensions ExtensionsConfig  `yaml:"extensions"` // Extension configuration
+}
+
+// ExtensionsConfig defines required and optional extensions
+type ExtensionsConfig struct {
+	Required []string `yaml:"required"` // Extensions that must load (fail if missing)
+	Optional []string `yaml:"optional"` // Extensions that should load (skip if missing)
 }
 
 type AppConfig struct {

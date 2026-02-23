@@ -1,0 +1,193 @@
+# PHP Extensions Configuration for Maboo
+# Hybrid approach: core static, optional dynamic
+
+versions:
+  "7.4":
+    configure_flags:
+      - "--disable-all"
+      - "--enable-json"  # bundled in 8+
+  "8.0":
+    configure_flags: []
+  "8.1":
+    configure_flags: []
+  "8.2":
+    configure_flags: []
+  "8.3":
+    configure_flags: []
+  "8.4":
+    configure_flags: []
+
+# Core extensions - always built statically into libphp
+core_extensions:
+  # Database
+  - name: pdo
+    static: true
+    deps: []
+  - name: pdo_mysql
+    static: true
+    deps: [pdo, mysqlnd]
+  - name: mysqli
+    static: true
+    deps: [mysqlnd]
+  - name: mysqlnd
+    static: true
+    deps: []
+
+  # Text/XML
+  - name: mbstring
+    static: true
+    deps: [onig]
+  - name: xml
+    static: true
+    deps: [libxml2]
+  - name: dom
+    static: true
+    deps: [xml]
+  - name: simplexml
+    static: true
+    deps: [xml]
+  - name: tokenizer
+    static: true
+    deps: []
+  - name: ctype
+    static: true
+    deps: []
+
+  # Security
+  - name: openssl
+    static: true
+    deps: [openssl-dev]
+  - name: sodium
+    static: true
+    deps: [libsodium-dev]
+
+  # Session
+  - name: session
+    static: true
+    deps: []
+
+  # File
+  - name: fileinfo
+    static: true
+    deps: []
+  - name: zip
+    static: true
+    deps: [libzip-dev]
+
+# Optional extensions - built as shared .so files
+optional_extensions:
+  # Caching
+  - name: opcache
+    static: false
+    deps: []
+  - name: apcu
+    static: false
+    deps: []
+  - name: redis
+    static: false
+    deps: [hiredis]
+  - name: memcached
+    static: false
+    deps: [libmemcached-dev]
+
+  # Database (optional)
+  - name: pdo_pgsql
+    static: false
+    deps: [libpq-dev]
+  - name: pgsql
+    static: false
+    deps: [libpq-dev]
+
+  # Image
+  - name: gd
+    static: false
+    deps: [libpng-dev, libjpeg-turbo-dev, freetype-dev, libwebp-dev]
+  - name: imagick
+    static: false
+    deps: [imagemagick-dev]
+
+  # Network
+  - name: curl
+    static: false
+    deps: [curl-dev]
+  - name: soap
+    static: false
+    deps: [libxml2]
+  - name: sockets
+    static: false
+    deps: []
+  - name: ldap
+    static: false
+    deps: [openldap-dev]
+
+  # Internationalization
+  - name: intl
+    static: false
+    deps: [icu-dev]
+
+  # XML Advanced
+  - name: xsl
+    static: false
+    deps: [libxslt-dev, xml]
+
+  # Math
+  - name: bcmath
+    static: false
+    deps: []
+  - name: gmp
+    static: false
+    deps: [gmp-dev]
+
+  # System
+  - name: pcntl
+    static: false
+    deps: []
+  - name: posix
+    static: false
+    deps: []
+  - name: sysvsem
+    static: false
+    deps: []
+  - name: sysvshm
+    static: false
+    deps: []
+  - name: calendar
+    static: false
+    deps: []
+  - name: exif
+    static: false
+    deps: []
+  - name: ftp
+    static: false
+    deps: [openssl]
+  - name: gettext
+    static: false
+    deps: [gettext-dev]
+
+# System dependencies (Alpine packages)
+system_deps:
+  - build-base
+  - autoconf
+  - bison
+  - re2c
+  - libxml2-dev
+  - openssl-dev
+  - curl-dev
+  - libpng-dev
+  - libjpeg-turbo-dev
+  - freetype-dev
+  - libwebp-dev
+  - imagemagick-dev
+  - onig-dev
+  - icu-dev
+  - libzip-dev
+  - libxslt-dev
+  - gmp-dev
+  - openldap-dev
+  - libmemcached-dev
+  - hiredis-dev
+  - libsodium-dev
+  - libpq-dev
+  - argon2-dev
+  - readline-dev
+  - bzip2-dev

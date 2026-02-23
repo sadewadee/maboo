@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/sadewadee/maboo/internal/config"
+	"github.com/sadewadee/maboo/internal/phpengine"
 	"github.com/sadewadee/maboo/internal/server"
 	"github.com/sadewadee/maboo/internal/worker"
 )
@@ -42,7 +44,10 @@ func serve() {
 		cfgPath = os.Args[2]
 	}
 
-	logger := setupLogger("info", "json")
+	logger, startupCloser := setupLogger("info", "json", "stdout")
+	if startupCloser != nil {
+		defer startupCloser.Close()
+	}
 	logger.Info("maboo starting", "version", version)
 
 	cfg, err := config.Load(cfgPath)
@@ -51,9 +56,18 @@ func serve() {
 		os.Exit(1)
 	}
 
-	logger = setupLogger(cfg.Logging.Level, cfg.Logging.Format)
+	if startupCloser != nil {
+		_ = startupCloser.Close()
+		startupCloser = nil
+	}
+	logger, logCloser := setupLogger(cfg.Logging.Level, cfg.Logging.Format, cfg.Logging.Output)
+	if logCloser != nil {
+		defer logCloser.Close()
+	}
 
 	// Create embedded worker pool
+	phpengine.SetLogger(logger)
+
 	workerPool := worker.NewPool(cfg)
 	workerPool.SetLogger(logger)
 
@@ -108,7 +122,7 @@ func serve() {
 	logger.Info("maboo stopped")
 }
 
-func setupLogger(level, format string) *slog.Logger {
+func setupLogger(level, format, output string) (*slog.Logger, io.Closer) {
 	var lvl slog.Level
 	switch level {
 	case "debug":
@@ -121,16 +135,32 @@ func setupLogger(level, format string) *slog.Logger {
 		lvl = slog.LevelInfo
 	}
 
+	writer, closer := resolveLogOutput(output)
 	opts := &slog.HandlerOptions{Level: lvl}
 
 	var handler slog.Handler
 	if format == "text" {
-		handler = slog.NewTextHandler(os.Stdout, opts)
+		handler = slog.NewTextHandler(writer, opts)
 	} else {
-		handler = slog.NewJSONHandler(os.Stdout, opts)
+		handler = slog.NewJSONHandler(writer, opts)
 	}
 
-	return slog.New(handler)
+	return slog.New(handler), closer
+}
+
+func resolveLogOutput(output string) (io.Writer, io.Closer) {
+	switch output {
+	case "", "stdout":
+		return os.Stdout, nil
+	case "stderr":
+		return os.Stderr, nil
+	default:
+		f, err := os.OpenFile(output, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+		if err != nil {
+			return os.Stdout, nil
+		}
+		return f, f
+	}
 }
 
 func printUsage() {

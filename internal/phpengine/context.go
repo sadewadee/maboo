@@ -16,6 +16,9 @@ type Context struct {
 	Files   map[string]File
 	Env     map[string]string
 
+	// Request body (raw)
+	Body []byte
+
 	// Execution info
 	ScriptFilename string
 	DocumentRoot   string
